@@ -15,12 +15,10 @@ export class ExchangesBinanceService {
   async fetchBalance(coins: string[]): Promise<any> {
     try {
       const balance = await this.binance.fetchBalance();
-
-      const balancesArray = coins.map((coin) => ({
+      return coins.map((coin) => ({
         asset: coin.toUpperCase(),
         balance: balance.total[coin.toUpperCase()] || 0,
       }));
-      return balancesArray;
     } catch (error) {
       throw new Error(`Failed to fetch balance: ${error.message}`);
     }
