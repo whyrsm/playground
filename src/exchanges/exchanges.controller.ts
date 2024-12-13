@@ -1,4 +1,4 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get } from "@nestjs/common";
 import { ExchangesBinanceService } from './exchanges-binance.service';
 
 @Controller('exchanges')
@@ -7,7 +7,8 @@ export class ExchangesController {
 
   @Get('balance')
   async getBalance() {
-    return this.binance.fetchBalance();
+    const coinArray: string[] = ['BTC', 'ETH', 'USDT', 'USDC', 'SOL'];
+    return this.binance.fetchBalance(coinArray);
   }
 
   @Get('transactions')

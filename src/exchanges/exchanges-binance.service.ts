@@ -7,15 +7,20 @@ export class ExchangesBinanceService {
 
   constructor() {
     this.binance = new ccxt.binance({
-      // apiKey: process.env.BINANCE_API_KEY,
-      // secret: process.env.BINANCE_SECRET_KEY,
+      apiKey: process.env.BINANCE_API_KEY,
+      secret: process.env.BINANCE_SECRET_KEY,
     });
   }
 
-  async fetchBalance() {
+  async fetchBalance(coins: string[]): Promise<any> {
     try {
       const balance = await this.binance.fetchBalance();
-      return balance;
+
+      const balancesArray = coins.map((coin) => ({
+        asset: coin.toUpperCase(),
+        balance: balance.total[coin.toUpperCase()] || 0,
+      }));
+      return balancesArray;
     } catch (error) {
       throw new Error(`Failed to fetch balance: ${error.message}`);
     }
