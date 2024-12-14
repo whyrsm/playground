@@ -37,7 +37,7 @@ export class ExchangesController {
     const assetBitget = await this.bitget.fetchBalance(this.BITGET_ASSET);
     const assetAll = [...assetHyperliquid, ...assetBinance, ...assetBitget];
     const totalUSDValue = assetAll.reduce(
-      (acc, balance) => acc + parseFloat(balance.value.usd),
+      (acc, balance) => acc + parseFloat(balance.value_usd),
       0,
     );
 
