@@ -1,18 +1,14 @@
 import { Controller, Get } from '@nestjs/common';
-import { ExchangesBinanceService } from './exchanges-binance.service';
+// import { ExchangesBinanceService } from './exchanges-binance.service';
+import { ExchangesHyperliquidService } from './exchanges-hyperliquid.service';
 
 @Controller('exchanges')
 export class ExchangesController {
-  constructor(private readonly binance: ExchangesBinanceService) {}
+  constructor(private readonly hyperliquid: ExchangesHyperliquidService) {}
 
   @Get('balance')
   async getBalance() {
-    const coinArray: string[] = ['BTC', 'ETH', 'USDT', 'USDC', 'SOL'];
-    return this.binance.fetchBalance(coinArray);
-  }
-
-  @Get('transactions')
-  async getTransactions() {
-    return this.binance.fetchTransactions();
+    return this.hyperliquid.fetchBalance(['HYPE', 'USDC']);
+    // return this.binance.fetchBalance(['BTC', 'ETH', 'USDT', 'USDC', 'SOL']);
   }
 }
