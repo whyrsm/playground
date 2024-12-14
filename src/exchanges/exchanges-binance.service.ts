@@ -48,6 +48,7 @@ export class ExchangesBinanceService {
             usd: this.formatNumber(usdValue),
           },
           source: this.BINANCE,
+          last_update: new Date().toISOString(),
         };
       });
     } catch (error) {
