@@ -44,9 +44,7 @@ export class ExchangesHyperliquidService {
         return {
           asset: normalizedToken,
           balance: this.formatNumber(balanceAmount),
-          value: {
-            usd: this.formatNumber(usdValue),
-          },
+          value_usd: this.formatNumber(usdValue),
           source: this.HYPERLIQUID,
           last_update: new Date().toISOString(),
         };

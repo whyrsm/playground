@@ -44,9 +44,7 @@ export class ExchangesBinanceService {
         return {
           asset: normalizedCoin,
           balance: this.formatNumber(balanceAmount),
-          value: {
-            usd: this.formatNumber(usdValue),
-          },
+          value_usd: this.formatNumber(usdValue),
           source: this.BINANCE,
           last_update: new Date().toISOString(),
         };
