@@ -25,7 +25,7 @@ export class ExchangesBinanceService {
       // create trading pairs for each coin
       const tradingPairs = coins
         .filter((coin) => coin.toUpperCase() !== 'USDT')
-        .map((coin) => `${coin}\USDT`);
+        .map((coin) => `${coin}/USDT`);
 
       // fetch tickers for the traiding pairs
       const tickers = await this.binance.fetchTickers(tradingPairs);
