@@ -72,7 +72,7 @@ export class ExchangesController {
   }
 
   @Get('snapshot')
-  async getBalance() {
+  async getSnapshot() {
     const assetHyperliquid = await this.hyperliquid.fetchBalance(this.HYPERLIQUID_ASSET);
     console.log('Hyperliquid', assetHyperliquid);
     const assetBinancePrimary = await this.binancePrimary.fetchBalance(this.BINANCE_ASSET);
