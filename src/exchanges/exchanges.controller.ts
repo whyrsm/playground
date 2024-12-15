@@ -1,7 +1,8 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, Post } from "@nestjs/common";
 import { ExchangesBinanceService } from './exchanges-binance.service';
 import { ExchangesHyperliquidService } from './exchanges-hyperliquid.service';
 import { ExchangesBitgetService } from './exchanges-bitget.service';
+import { PortfolioSnapshotService } from "./portfolio-snapshot.service";
 
 @Controller('exchanges')
 export class ExchangesController {
@@ -9,6 +10,7 @@ export class ExchangesController {
     private readonly hyperliquid: ExchangesHyperliquidService,
     private readonly binance: ExchangesBinanceService,
     private readonly bitget: ExchangesBitgetService,
+    private readonly snapshotService: PortfolioSnapshotService,
   ) {}
 
   private BINANCE_ASSET: string[] = ['BTC', 'ETH', 'SOL', 'BNB', 'USDT', 'USDC', 'NOT'];
@@ -33,17 +35,18 @@ export class ExchangesController {
   @Get('all/balance')
   async getBalance() {
     const assetHyperliquid = await this.hyperliquid.fetchBalance(this.HYPERLIQUID_ASSET);
+    console.log('Hyperliquid', assetHyperliquid);
     const assetBinance = await this.binance.fetchBalance(this.BINANCE_ASSET);
+    console.log('Binance', assetBinance);
     const assetBitget = await this.bitget.fetchBalance(this.BITGET_ASSET);
+    console.log('Bitget', assetBitget);
     const assetAll = [...assetHyperliquid, ...assetBinance, ...assetBitget];
-    const totalUSDValue = assetAll.reduce(
-      (acc, balance) => acc + parseFloat(balance.value_usd),
-      0,
-    );
+    await this.snapshotService.save(assetAll);
+    return assetAll;
+  }
 
-    return {
-      total_usd_value: totalUSDValue,
-      assets: assetAll,
-    };
+  @Post('remove-data')
+  async removeData() {
+    await this.snapshotService.deleteAll();
   }
 }
