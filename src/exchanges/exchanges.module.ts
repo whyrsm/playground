@@ -11,10 +11,17 @@ import { PortfolioSnapshot } from '../entities/portfolio-snapshot.entity';
   imports: [TypeOrmModule.forFeature([PortfolioSnapshot])],
   controllers: [ExchangesController],
   providers: [
-    ExchangesBinanceService,
     ExchangesHyperliquidService,
     ExchangesBitgetService,
     PortfolioSnapshotService,
+    {
+      provide: 'BinanceServiceAccountPrimary',
+      useFactory: () => new ExchangesBinanceService('primary'),
+    },
+    {
+      provide: 'BinanceServiceAccountSecondary',
+      useFactory: () => new ExchangesBinanceService('secondary'),
+    },
   ],
 })
 export class ExchangesModule {}

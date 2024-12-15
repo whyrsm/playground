@@ -4,13 +4,22 @@ import * as ccxt from 'ccxt';
 @Injectable()
 export class ExchangesBinanceService {
   private binance;
-  private BINANCE: string = 'BINANCE';
+  private BINANCE: string;
 
-  constructor() {
-    this.binance = new ccxt.binance({
-      apiKey: process.env.BINANCE_API_KEY,
-      secret: process.env.BINANCE_SECRET_KEY,
-    });
+  constructor(account: string) {
+    if (account === 'primary') {
+      this.binance = new ccxt.binance({
+        apiKey: process.env.BINANCE_API_KEY,
+        secret: process.env.BINANCE_SECRET_KEY,
+      });
+      this.BINANCE = 'BINANCE_PRIMARY';
+    } else if (account === 'secondary') {
+      this.binance = new ccxt.binance({
+        apiKey: process.env.BINANCE_API_KEY_2,
+        secret: process.env.BINANCE_SECRET_KEY_2,
+      });
+      this.BINANCE = 'BINANCE_SECONDARY';
+    }
   }
 
   private formatNumber(value: number): string {
