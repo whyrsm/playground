@@ -42,8 +42,8 @@ export class ExchangesController {
     // Convert summary object into an array for a clean response
     return Object.keys(summary).map((symbol) => ({
       asset: symbol,
-      totalBalance: summary[symbol].totalBalance.toFixed(9),
-      totalValueUsd: summary[symbol].totalValueUsd.toFixed(2),
+      total_balance: summary[symbol].totalBalance.toFixed(9),
+      total_value_usd: summary[symbol].totalValueUsd.toFixed(2),
     }));
   }
 
