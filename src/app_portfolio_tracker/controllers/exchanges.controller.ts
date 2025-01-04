@@ -1,10 +1,10 @@
 // @ts-ignore
 
-import { Controller, Get, Inject, Post, Query } from "@nestjs/common";
-import { ExchangesBinanceService } from './exchanges-binance.service';
-import { ExchangesHyperliquidService } from './exchanges-hyperliquid.service';
-import { ExchangesBitgetService } from './exchanges-bitget.service';
-import { PortfolioSnapshotService } from "./portfolio-snapshot.service";
+import { Controller, Get, Inject, Post, Query } from '@nestjs/common';
+import { ExchangesBinanceService } from '../services/exchanges-binance.service';
+import { ExchangesHyperliquidService } from '../services/exchanges-hyperliquid.service';
+import { ExchangesBitgetService } from '../services/exchanges-bitget.service';
+import { PortfolioSnapshotService } from '../services/portfolio-snapshot.service';
 
 @Controller('exchanges')
 export class ExchangesController {
@@ -54,11 +54,36 @@ export class ExchangesController {
 
   @Get('binance/balance')
   async getBinanceBalance(@Query('account') account: string) {
-
     if (account === 'primary') {
       return this.binancePrimary.fetchBalance(this.BINANCE_ASSET);
     } else if (account === 'secondary') {
       return this.binanceSecondary.fetchBalance(this.BINANCE_ASSET);
+    } else {
+      throw new Error(
+        'Invalid account parameter. Use "primary" or "secondary".',
+      );
+    }
+  }
+
+  @Get('binance/deposits')
+  async getBinanceDeposits(@Query('account') account: string) {
+    if (account === 'primary') {
+      return this.binancePrimary.fetchDeposit();
+    } else if (account === 'secondary') {
+      return this.binanceSecondary.fetchDeposit();
+    } else {
+      throw new Error(
+        'Invalid account parameter. Use "primary" or "secondary".',
+      );
+    }
+  }
+
+  @Get('binance/trades')
+  async getBinanceMyTrades(@Query('account') account: string) {
+    if (account === 'primary') {
+      return this.binancePrimary.fetchMyTrades(this.BINANCE_ASSET);
+    } else if (account === 'secondary') {
+      return this.binanceSecondary.fetchMyTrades(this.BINANCE_ASSET);
     } else {
       throw new Error(
         'Invalid account parameter. Use "primary" or "secondary".',
@@ -138,4 +163,3 @@ export class ExchangesController {
     return response;
   }
 }
-

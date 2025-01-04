@@ -62,4 +62,44 @@ export class ExchangesBinanceService {
       throw new Error(`Failed to fetch balance: ${error.message}`);
     }
   }
+
+  async fetchDeposit(): Promise<any> {
+    return this.binance.fetchDeposits();
+  }
+
+  async fetchMyTrades(coins: string[]): Promise<any> {
+    try {
+      const trades = [];
+
+      const symbols: string[] = coins
+        .filter(
+          (coin: string) =>
+            coin.toUpperCase() !== 'USDT' && coin.toUpperCase() !== 'USDC',
+        )
+        .map((coin: string): string => `${coin}USDT`);
+
+      for (const symbol of symbols) {
+        const coinTrades = await this.binance.fetchMyTrades(symbol);
+        const tradeResult = coinTrades.map((trade) => ({
+          trade_id: trade.id,
+          order_id: trade.order,
+          symbol: trade.symbol,
+          side: trade.side,
+          price: trade.price,
+          amount: trade.amount,
+          cost: trade.cost,
+          fee_currency: trade.fee?.currency || null,
+          fee_cost: trade.fee?.cost || 0,
+          source: this.BINANCE,
+          datetime: trade.datetime,
+        }));
+        trades.push(...tradeResult);
+      }
+
+      return trades;
+    } catch (error) {
+      console.log('Error fetching trades:', error.message);
+      throw new Error('Failed to fetch trades from Binance');
+    }
+  }
 }

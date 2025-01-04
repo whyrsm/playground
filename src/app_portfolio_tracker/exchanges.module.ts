@@ -1,11 +1,11 @@
 import { Module } from '@nestjs/common';
-import { ExchangesBinanceService } from './exchanges-binance.service';
-import { ExchangesController } from './exchanges.controller';
-import { ExchangesHyperliquidService } from './exchanges-hyperliquid.service';
-import { ExchangesBitgetService } from './exchanges-bitget.service';
-import { PortfolioSnapshotService } from './portfolio-snapshot.service';
+import { ExchangesBinanceService } from './services/exchanges-binance.service';
+import { ExchangesController } from './controllers/exchanges.controller';
+import { ExchangesHyperliquidService } from './services/exchanges-hyperliquid.service';
+import { ExchangesBitgetService } from './services/exchanges-bitget.service';
+import { PortfolioSnapshotService } from './services/portfolio-snapshot.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { PortfolioSnapshot } from '../entities/portfolio-snapshot.entity';
+import { PortfolioSnapshot } from './entities/portfolio-snapshot.entity';
 
 @Module({
   imports: [TypeOrmModule.forFeature([PortfolioSnapshot])],
