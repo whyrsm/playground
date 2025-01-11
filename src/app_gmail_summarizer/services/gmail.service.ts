@@ -16,7 +16,7 @@ export class GmailService {
     this.gmail = google.gmail({ version: 'v1', auth: this.oAuth2Client });
   }
 
-  generateAuthUrl(): string {
+  async generateAuthUrl(): Promise<string> {
     return this.oAuth2Client.generateAuthUrl({
       access_type: 'offline',
       scope: ['https://www.googleapis.com/auth/gmail.readonly'],
@@ -56,27 +56,20 @@ export class GmailService {
   }
 
   async getEmails(date: string): Promise<any> {
-    // Check if credentials are set
-    if (!this.oAuth2Client.credentials) {
-      // Check if tokens are stored in global storage
-      const storedTokens = global['gmail_tokens'];
-      if (storedTokens) {
-        this.oAuth2Client.setCredentials(storedTokens);
-        return { message: 'Credentials are set', tokens: { storedTokens } };
-      }
-      return { message: 'Credentials are not set' };
-    }
-
     try {
       // Format date for query
       const queryDate = new Date(date);
+      const nextDate = new Date(queryDate);
+      queryDate.setDate(queryDate.getDate() - 1);
+      nextDate.setDate(nextDate.getDate() + 1);
+
       const formattedDate = queryDate.toISOString().split('T')[0];
+      const formattedNextDate = nextDate.toISOString().split('T')[0];
       
-      // Get list of messages for the specified date
-      // Date param should be in YYYY-MM-DD format (e.g. 2024-01-15)
+      // Modified query to search for the entire day
       const response = await this.gmail.users.messages.list({
         userId: 'me',
-        q: `after:${formattedDate} before:${formattedDate}`,
+        q: `after:${formattedDate} before:${formattedNextDate}`,
       });
 
       const emails = [];
@@ -89,32 +82,51 @@ export class GmailService {
             id: message.id,
           });
 
-          // Extract subject and body
-          const subject = email.data.payload.headers.find(
-            (header) => header.name.toLowerCase() === 'subject'
-          )?.value || 'No Subject';
+          // Extract sender email from headers
+          const headers = email.data.payload.headers;
+          const from = headers.find(header => header.name.toLowerCase() === 'from');
+          const senderEmail = from ? this.extractEmailAddress(from.value) : 'unknown';
 
-          let body = '';
+          // Extract plain text content
+          let textContent = '';
           if (email.data.payload.parts) {
             // Handle multipart messages
-            body = this.getBodyFromParts(email.data.payload.parts);
+            for (const part of email.data.payload.parts) {
+              if (part.mimeType === 'text/plain') {
+                textContent = Buffer.from(part.body.data, 'base64').toString();
+                break;
+              }
+            }
           } else if (email.data.payload.body.data) {
             // Handle single part messages
-            body = Buffer.from(email.data.payload.body.data, 'base64')
-              .toString('utf-8');
+            textContent = Buffer.from(email.data.payload.body.data, 'base64').toString();
+            // clean text content from html tags, new lines, other unwanted characters and links, line breaks, and extra spaces
+            textContent = textContent.replace(/<[^>]*>|[\n\r]/g, '');
+            textContent = textContent.replace(/https?:\/\/\S+/g, '');
+            textContent = textContent.replace(/\s+/g, ' ');
+            textContent = textContent.trim();
           }
 
+          // Extract date from headers
+          const dateHeader = headers.find(header => header.name.toLowerCase() === 'date');
+          const emailDate = dateHeader ? new Date(dateHeader.value) : new Date(); 
+
           emails.push({
-            subject,
-            body,
+            id: message.id,
+            emailDate: emailDate,
+            sender: senderEmail,
+            subject: headers.find(header => header.name.toLowerCase() === 'subject')?.value || '',
+            content: textContent,
           });
         }
       }
 
       return { 
-        message: emails.length > 0 ? 'Emails fetched successfully' : 'No emails found for this date',
-        data: emails,
-        count: emails.length
+        message: 'Emails fetched successfully', 
+        date: date,
+        query_filter: `after:${formattedDate} before:${formattedNextDate}`,
+        count: emails.length ,
+        data: emails, 
       };
     } catch (error) {
       console.error('Error fetching emails:', error);
@@ -122,15 +134,14 @@ export class GmailService {
     }
   }
 
-  private getBodyFromParts(parts: any[]): string {
-    let body = '';
-    parts.forEach(part => {
-      if (part.parts) {
-        body += this.getBodyFromParts(part.parts);
-      } else if (part.mimeType === 'text/plain' && part.body.data) {
-        body += Buffer.from(part.body.data, 'base64').toString('utf-8');
-      }
-    });
-    return body;
+  private extractEmailAddress(from: string): string {
+    const matches = from.match(/<(.+?)>/);
+    if (matches) {
+        return matches[1];
+    }
+    // If no angle brackets, assume the entire string is an email
+    return from.trim();
   }
+
+  
 }
