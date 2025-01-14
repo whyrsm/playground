@@ -60,11 +60,14 @@ export class GoogleService {
     try {
       // format date to be used in the query
       const { formattedDate, formattedNextDate } = this.formatDate(date);
+
+      // Combine date and email filters
+      const queryFilter = `after:${formattedDate} before:${formattedNextDate}`;
       
       // Modified query to search for the entire day
-      const response = await this.gmail.users.messages.list({
+      const response = await  this.gmail.users.messages.list({
         userId: 'me',
-        q: `after:${formattedDate} before:${formattedNextDate}`,
+        q: queryFilter,
       });
 
       const emails = [];
@@ -82,8 +85,8 @@ export class GoogleService {
           const from = headers.find(header => header.name.toLowerCase() === 'from');
           const senderEmail = from ? this.extractEmailAddress(from.value) : 'unknown';
 
-          // Extract plain text content
-          let textContent = this.extractTextContent(email.data.payload);
+          // Extract plain text content using the existing extractTextContent method
+          const textContent = this.extractTextContent(email.data.payload);
 
           // Extract date from headers
           const dateHeader = headers.find(header => header.name.toLowerCase() === 'date');
@@ -102,7 +105,7 @@ export class GoogleService {
       return { 
         message: 'Emails fetched successfully', 
         date: date,
-        query_filter: `after:${formattedDate} before:${formattedNextDate}`,
+        query_filter: queryFilter,
         count: emails.length ,
         data: emails, 
       };
@@ -140,22 +143,23 @@ export class GoogleService {
     return { formattedDate, formattedNextDate };
   }
   
-  private extractTextContent(payload: any): string {
+  private extractTextContent(payload): string {
     let textContent = '';
-    if (payload) {
-      // Handle multipart messages
-      for (const part of payload) {
+    
+    // Handle nested parts
+    if (payload.parts) {
+      for (const part of payload.parts) {
         if (part.mimeType === 'text/plain') {
           textContent = Buffer.from(part.body.data, 'base64').toString();
-          textContent = this.cleanTextContent(textContent);
           break;
         }
       }
-    } else if (payload) {
-      // Handle single part messages
-      textContent = Buffer.from(payload, 'base64').toString();
-      textContent = this.cleanTextContent(textContent);
+    } 
+    // Handle messages with no parts but direct body
+    else if (payload.body && payload.body.data) {
+      textContent = Buffer.from(payload.body.data, 'base64').toString();
     }
-    return textContent;
+
+    return this.cleanTextContent(textContent);
   }  
 }
