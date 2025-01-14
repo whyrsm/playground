@@ -1,20 +1,20 @@
 import { Controller, Get, Query, Post, Body } from '@nestjs/common';
-import { GmailService } from '../services/gmail.service';
+import { GoogleService } from '../services/google.service';
 
 @Controller('google')
-export class GmailController {
-  constructor(private readonly gmailService: GmailService) {}
+export class GoogleController {
+  constructor(private readonly googleService: GoogleService) {}
 
   @Get('auth-url')
   getAuthUrl() {
-    const authUrl = this.gmailService.generateAuthUrl();
+    const authUrl = this.googleService.generateAuthUrl();
     console.log('authUrl', authUrl);
     return { authUrl };
   }
 
   @Post('set-credentials')
   async setCredentials(@Body() body: { access_token: string, refresh_token: string }): Promise<any> {
-    return this.gmailService.setCredentials({
+    return this.googleService.setCredentials({
       access_token: body.access_token,
       refresh_token: body.refresh_token
     });
@@ -25,6 +25,6 @@ export class GmailController {
     if (!code) {
       return { error: 'Authorization code is required' };
     }
-    return this.gmailService.getTokens(code);
+    return this.googleService.getTokens(code);
   }
 }

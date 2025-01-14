@@ -4,10 +4,12 @@ import { AppService } from './app.service';
 import { ExchangesModule } from './app_portfolio_tracker/exchanges.module';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { SummarizerModule } from './app_gmail_summarizer/summarizer.module';
 
 @Module({
   imports: [
     ExchangesModule,
+    SummarizerModule,
     ConfigModule.forRoot({
       isGlobal: true,
     }),

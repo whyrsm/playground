@@ -1,8 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { google } from 'googleapis';
+import { text } from 'stream/consumers';
 
 @Injectable()
-export class GmailService {
+export class GoogleService {
   private gmail;
   private oAuth2Client;
 
@@ -57,14 +58,8 @@ export class GmailService {
 
   async getEmails(date: string): Promise<any> {
     try {
-      // Format date for query
-      const queryDate = new Date(date);
-      const nextDate = new Date(queryDate);
-      queryDate.setDate(queryDate.getDate() - 1);
-      nextDate.setDate(nextDate.getDate() + 1);
-
-      const formattedDate = queryDate.toISOString().split('T')[0];
-      const formattedNextDate = nextDate.toISOString().split('T')[0];
+      // format date to be used in the query
+      const { formattedDate, formattedNextDate } = this.formatDate(date);
       
       // Modified query to search for the entire day
       const response = await this.gmail.users.messages.list({
@@ -88,24 +83,7 @@ export class GmailService {
           const senderEmail = from ? this.extractEmailAddress(from.value) : 'unknown';
 
           // Extract plain text content
-          let textContent = '';
-          if (email.data.payload.parts) {
-            // Handle multipart messages
-            for (const part of email.data.payload.parts) {
-              if (part.mimeType === 'text/plain') {
-                textContent = Buffer.from(part.body.data, 'base64').toString();
-                break;
-              }
-            }
-          } else if (email.data.payload.body.data) {
-            // Handle single part messages
-            textContent = Buffer.from(email.data.payload.body.data, 'base64').toString();
-            // clean text content from html tags, new lines, other unwanted characters and links, line breaks, and extra spaces
-            textContent = textContent.replace(/<[^>]*>|[\n\r]/g, '');
-            textContent = textContent.replace(/https?:\/\/\S+/g, '');
-            textContent = textContent.replace(/\s+/g, ' ');
-            textContent = textContent.trim();
-          }
+          let textContent = this.extractTextContent(email.data.payload);
 
           // Extract date from headers
           const dateHeader = headers.find(header => header.name.toLowerCase() === 'date');
@@ -143,5 +121,41 @@ export class GmailService {
     return from.trim();
   }
 
+  private cleanTextContent(textContent: string): string {
+    textContent = textContent.replace(/<[^>]*>|[\n\r]/g, '');
+    textContent = textContent.replace(/https?:\/\/\S+/g, '');
+    textContent = textContent.replace(/\s+/g, ' ');
+    textContent = textContent.trim();
+    return textContent;
+  }
+
+  private formatDate(date: string): { formattedDate: string; formattedNextDate: string } {
+    const queryDate = new Date(date);
+    const nextDate = new Date(queryDate);
+    queryDate.setDate(queryDate.getDate() - 1);
+    nextDate.setDate(nextDate.getDate() + 1);
+
+    const formattedDate = queryDate.toISOString().split('T')[0];
+    const formattedNextDate = nextDate.toISOString().split('T')[0];
+    return { formattedDate, formattedNextDate };
+  }
   
+  private extractTextContent(payload: any): string {
+    let textContent = '';
+    if (payload) {
+      // Handle multipart messages
+      for (const part of payload) {
+        if (part.mimeType === 'text/plain') {
+          textContent = Buffer.from(part.body.data, 'base64').toString();
+          textContent = this.cleanTextContent(textContent);
+          break;
+        }
+      }
+    } else if (payload) {
+      // Handle single part messages
+      textContent = Buffer.from(payload, 'base64').toString();
+      textContent = this.cleanTextContent(textContent);
+    }
+    return textContent;
+  }  
 }
