@@ -125,9 +125,28 @@ export class GoogleService {
   }
 
   private cleanTextContent(textContent: string): string {
-    textContent = textContent.replace(/<[^>]*>|[\n\r]/g, '');
+    // Remove HTML tags
+    textContent = textContent.replace(/<[^>]*>/g, '');
+
+    // Remove CSS and @media rules
+    textContent = textContent.replace(/@[^{}]*{[^}]*}/g, ''); // Matches @font-face, @media, etc.
+    textContent = textContent.replace(/\.[a-zA-Z0-9_-]+ {[^}]*}/g, ''); // Matches inline CSS classes
+
+    // Decode HTML entities
+    textContent = textContent.replace(/&#(\d+);/g, (_, code) => String.fromCharCode(code));
+    textContent = textContent.replace(/&quot;/g, '"')
+                             .replace(/&apos;/g, "'")
+                             .replace(/&amp;/g, '&')
+                             .replace(/&lt;/g, '<')
+                             .replace(/&gt;/g, '>');
+
+    // Remove URLs
     textContent = textContent.replace(/https?:\/\/\S+/g, '');
-    textContent = textContent.replace(/\s+/g, ' ');
+
+    // Remove special characters, extra spaces, and non-alphanumeric sequences
+    textContent = textContent.replace(/[^a-zA-Z0-9\s.,!?'"%&\-]+/g, ' '); // Keep essential punctuation
+    textContent = textContent.replace(/\s+/g, ' '); // Normalize spaces
+    
     textContent = textContent.trim();
     return textContent;
   }
